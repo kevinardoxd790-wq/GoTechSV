@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Clock, User, Package, MapPin, Trash2, RefreshCw, Download } from "lucide-react";
+import { Calendar, User, Package, MapPin, Trash2, RefreshCw, Download, Lock, Eye, EyeOff } from "lucide-react";
 import {
   Booking,
   loadBookings,
@@ -8,9 +8,93 @@ import {
   SCHEDULE_STORAGE_KEY,
 } from "@/constants/schedule";
 
+const ADMIN_PASSWORD = "GoTechsv123";
+const SECURITY_QUESTION = "¿Quién es el dueño de GoTech?";
+const SECURITY_ANSWER = "kevin alessandro";
+
 export default function AdminPanel() {
+  const [authenticated, setAuthenticated] = useState(false);
+  const [step, setStep] = useState<"password" | "question">("password");
+  const [password, setPassword] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filter, setFilter] = useState<"all" | "today" | "upcoming">("all");
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      setStep("question");
+      setError("");
+    } else {
+      setError("Contraseña incorrecta.");
+    }
+  };
+
+  const handleAnswerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (answer.trim().toLowerCase() === SECURITY_ANSWER) {
+      setAuthenticated(true);
+      setError("");
+    } else {
+      setError("Respuesta incorrecta.");
+    }
+  };
+
+  if (!authenticated) {
+    return (
+      <div className="pt-16 min-h-screen section-grid flex items-center justify-center">
+        <div className="w-full max-w-sm mx-4">
+          <div className="card-tech p-8 border border-neon-cyan/30">
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-neon-cyan/10 border border-neon-cyan/30 mx-auto mb-5">
+              <Lock className="w-7 h-7 text-neon-cyan" />
+            </div>
+            <h1 className="font-orbitron font-black text-xl text-white text-center mb-1">Acceso Admin</h1>
+            <p className="text-white/30 text-xs text-center mb-6">GoTech Panel de Control</p>
+
+            {step === "password" ? (
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <div className="relative">
+                  <input
+                    type={showPass ? "text" : "password"}
+                    placeholder="Contraseña"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-dark-700 border border-neon-cyan/20 rounded-xl px-4 py-3 text-white placeholder-white/20 text-sm focus:outline-none focus:border-neon-cyan/50 pr-10"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
+                  >
+                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+                <button type="submit" className="btn-neon w-full py-3 text-sm">Continuar</button>
+              </form>
+            ) : (
+              <form onSubmit={handleAnswerSubmit} className="space-y-4">
+                <p className="text-white/60 text-sm text-center mb-2">{SECURITY_QUESTION}</p>
+                <input
+                  type="text"
+                  placeholder="Tu respuesta"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  className="w-full bg-dark-700 border border-neon-cyan/20 rounded-xl px-4 py-3 text-white placeholder-white/20 text-sm focus:outline-none focus:border-neon-cyan/50"
+                  autoFocus
+                />
+                {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+                <button type="submit" className="btn-neon w-full py-3 text-sm">Acceder</button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const refresh = () => setBookings(loadBookings());
 
